@@ -1,268 +1,1038 @@
-  <!-- Brand & Status -->
-  <div class="flex items-center space-x-3">
-    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
-      <i class="fa-solid font-bold fa-boxes-stacked text-lg"></i>
-    </div>
-    <div>
-      <h1 class="font-bold text-slate-900 text-lg leading-tight">StockMaster Pro</h1>
-      <p class="text-xs text-slate-500 font-medium">Google Sheets & JSON Engine</p>
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Inventaris Professional</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="h-full text-slate-800 antialiased flex flex-col min-h-screen">
+
+  <!-- Mobile Overlay & Loading Indicator -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden transition-opacity duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm font-semibold text-slate-700">Memuat Data Spreadsheet...</p>
     </div>
   </div>
 
-  <!-- User Role Indicator & Actions -->
-  <div class="flex items-center space-x-3">
+  <div class="flex min-h-screen">
     
-    <!-- Role Status Badge -->
-    <div id="roleBadgeContainer" class="flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-      <span class="w-2 h-2 rounded-full bg-slate-400 me-2" id="roleDot"></span>
-      <span id="roleText">Role: GUEST</span>
-    </div>
+    <!-- SIDEBAR NAVIGATION (Desktop) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-xl">
+      <div>
+        <!-- Logo Header -->
+        <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+              <i class="fa-solid font-bold fa-boxes-stacked"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-white tracking-wide leading-tight">INVENTARIS</h1>
+              <span class="text-xs text-brand-400 font-medium">Pro Management</span>
+            </div>
+          </div>
+          <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
 
-    <!-- System Settings Button (Config API URL) -->
-    <button onclick="openApiConfigModal()" title="Pengaturan API" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition">
-      <i class="fa-solid fa-gear"></i>
-    </button>
+        <!-- Navigation Links -->
+        <nav class="p-4 space-y-1">
+          <a href="#" class="flex items-center space-x-3 px-4 py-3 text-white bg-brand-600 rounded-xl font-medium shadow-md shadow-brand-600/30">
+            <i class="fa-solid fa-chart-pie text-lg w-5"></i>
+            <span>Dashboard Data</span>
+          </a>
+          <button onclick="openConfigModal()" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition font-medium">
+            <i class="fa-solid fa-gear text-lg w-5"></i>
+            <span>Pengaturan API</span>
+          </button>
+          <button onclick="exportToCSV()" class="w-full flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition font-medium">
+            <i class="fa-solid fa-file-export text-lg w-5"></i>
+            <span>Ekspor CSV</span>
+          </button>
+        </nav>
+      </div>
 
-    <!-- Auth Buttons -->
-    <div id="authActions">
-      <button id="btnLogin" onclick="openLoginModal()" class="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium transition shadow-sm shadow-brand-500/30">
-        <i class="fa-solid fa-right-to-bracket"></i>
-        <span>Log In</span>
-      </button>
+      <!-- User Active Badge in Sidebar -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+        <div class="bg-slate-800/80 p-3 rounded-xl flex items-center space-x-3">
+          <div id="userAvatar" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold">
+            G
+          </div>
+          <div class="overflow-hidden flex-1">
+            <p id="sidebarUsername" class="text-sm font-semibold text-white truncate">Guest User</p>
+            <span id="sidebarRoleBadge" class="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-slate-700 text-slate-300">
+              GUEST
+            </span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 flex flex-col lg:pl-64 min-w-0">
       
-      <button id="btnLogout" onclick="handleLogout()" class="hidden inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-sm font-medium transition">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Log Out</span>
+      <!-- TOP NAVBAR -->
+      <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <button onclick="toggleSidebar()" class="lg:hidden text-slate-600 hover:text-slate-900 focus:outline-none p-2 rounded-lg bg-slate-100">
+            <i class="fa-solid fa-bars text-xl"></i>
+          </button>
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">Ringkasan Data Stok</h2>
+            <p class="text-xs text-slate-500 hidden sm:block">Kelola dan pantau seluruh inventaris real-time via Google Sheets</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <!-- Refresh Button -->
+          <button onclick="loadData()" title="Refresh Data" class="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition shadow-sm">
+            <i class="fa-solid fa-rotate text-sm"></i>
+          </button>
+
+          <!-- Dynamic Auth Button -->
+          <div id="authActions">
+            <button id="btnLogin" onclick="openLoginModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
+              <i class="fa-solid fa-right-to-bracket"></i>
+              <span>Log In</span>
+            </button>
+            <button id="btnLogout" onclick="logout()" class="hidden px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-semibold text-sm transition border border-rose-200 flex items-center space-x-2">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>Keluar</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <main class="p-4 sm:p-8 space-y-6 flex-1">
+
+        <!-- API Alert Warning Banner if API URL is Default -->
+        <div id="apiConfigWarning" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-circle-exclamation text-amber-600 text-xl"></i>
+            <div>
+              <p class="text-sm font-semibold">Google Apps Script URL belum diatur!</p>
+              <p class="text-xs text-amber-700">Silakan masukkan Web App URL Apps Script Anda agar data dapat terhubung secara live.</p>
+            </div>
+          </div>
+          <button onclick="openConfigModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
+            Atur API Sekarang
+          </button>
+        </div>
+
+        <!-- STATS KPI CARDS GRID -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          
+          <!-- Card 1: Total Jenis Barang -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Item</span>
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-box text-lg"></i>
+              </div>
+            </div>
+            <div class="mt-4">
+              <h3 id="statTotalItems" class="text-2xl font-bold text-slate-800">0</h3>
+              <p class="text-xs text-slate-500 mt-1">Jenis barang terdaftar</p>
+            </div>
+          </div>
+
+          <!-- Card 2: Total Unit Stok -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Stok Unit</span>
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i class="fa-solid fa-layer-group text-lg"></i>
+              </div>
+            </div>
+            <div class="mt-4">
+              <h3 id="statTotalStock" class="text-2xl font-bold text-slate-800">0</h3>
+              <p class="text-xs text-slate-500 mt-1">Keseluruhan unit di gudang</p>
+            </div>
+          </div>
+
+          <!-- Card 3: Stok Menipis Warning -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stok Menipis</span>
+              <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+              </div>
+            </div>
+            <div class="mt-4">
+              <h3 id="statLowStock" class="text-2xl font-bold text-amber-600">0</h3>
+              <p class="text-xs text-slate-500 mt-1">Barang dengan stok &lt; 10</p>
+            </div>
+          </div>
+
+          <!-- Card 4: Kategori Terbanyak -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kategori Dominan</span>
+              <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <i class="fa-solid fa-tags text-lg"></i>
+              </div>
+            </div>
+            <div class="mt-4">
+              <h3 id="statTopCategory" class="text-xl font-bold text-slate-800 truncate">-</h3>
+              <p class="text-xs text-slate-500 mt-1">Kategori terbanyak</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ANALYTICS VISUALIZATION SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Chart Component -->
+          <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-base">Sebaran Stok Per Kategori</h3>
+              <span class="text-xs text-slate-400 font-medium">Visualisasi Real-time</span>
+            </div>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Role Access Summary Info Box -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl text-white flex flex-col justify-between shadow-lg relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 opacity-10 text-9xl">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2 text-brand-400 mb-2 font-medium text-xs">
+                <i class="fa-solid fa-user-shield"></i>
+                <span>INFORMASI HAK AKSES SISTEM</span>
+              </div>
+              <h4 id="accessRoleTitle" class="text-2xl font-bold mb-3">Akses: Guest</h4>
+              <p id="accessRoleDesc" class="text-xs text-slate-300 leading-relaxed mb-4">
+                Sebagai Guest, Anda dapat melihat seluruh daftar inventaris secara interaktif tanpa izin menambah, mengedit, atau menghapus data.
+              </p>
+            </div>
+            <div class="pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+              <span>Status Otorisasi:</span>
+              <span id="accessRoleBadge" class="font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
+                READ-ONLY
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DATA MANAGEMENT TABLE CARD -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          
+          <!-- Table Controls Header -->
+          <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">Daftar Inventaris Barang</h3>
+              <p class="text-xs text-slate-500">Tabel data langsung terhubung dengan Google Sheets</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Search Bar -->
+              <div class="relative flex-1 sm:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari nama barang / ID..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+              </div>
+
+              <!-- Filter Kategori Dropdown -->
+              <select id="filterCategory" onchange="filterTable()" class="py-2 px-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition text-slate-600">
+                <option value="">Semua Kategori</option>
+              </select>
+
+              <!-- Filter Stok Dropdown -->
+              <select id="filterStockStatus" onchange="filterTable()" class="py-2 px-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition text-slate-600">
+                <option value="">Semua Status Stok</option>
+                <option value="normal">Stok Aman (&ge; 10)</option>
+                <option value="low">Stok Menipis (&lt; 10)</option>
+                <option value="empty">Stok Habis (0)</option>
+              </select>
+
+              <!-- Add Data Button (Admin & Petugas) -->
+              <button id="btnTambahBarang" onclick="openAddModal()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-emerald-600/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Tambah Barang</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Desktop & Mobile Table View -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/70 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                  <th class="py-3.5 px-6">ID Barang</th>
+                  <th class="py-3.5 px-6">Nama Barang</th>
+                  <th class="py-3.5 px-6">Kategori</th>
+                  <th class="py-3.5 px-6">Stok</th>
+                  <th class="py-3.5 px-6">Status</th>
+                  <th id="thActionHeader" class="py-3.5 px-6 text-right hidden">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTableBody" class="divide-y divide-slate-100 text-sm">
+                <!-- Rows injected dynamically via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State Container -->
+          <div id="emptyState" class="hidden py-12 flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl mb-3">
+              <i class="fa-solid fa-box-open"></i>
+            </div>
+            <h4 class="font-bold text-slate-700">Data Tidak Ditemukan</h4>
+            <p class="text-xs text-slate-400 max-w-xs mt-1">Tidak ada data barang yang sesuai dengan pencarian atau filter Anda.</p>
+          </div>
+
+          <!-- Table Footer Stats -->
+          <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <div>
+              Menampilkan <span id="visibleRowsCount" class="font-bold text-slate-700">0</span> dari <span id="totalRowsCount" class="font-bold text-slate-700">0</span> data
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Terhubung dengan Google Apps Script</span>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="p-6 text-center text-xs text-slate-400 border-t border-slate-200/60 bg-white">
+        &copy; 2026 Dashboard Inventaris Professional - Dikembangkan dengan Google Apps Script & GitHub Pages
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- MODAL 1: LOGIN MODAL -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-all duration-300 relative">
+      <button onclick="closeLoginModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
       </button>
-    </div>
 
-  </div>
-</div>
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800">Masuk ke Sistem</h3>
+        <p class="text-xs text-slate-500 mt-1">Masukkkan kredensial akun Admin atau Petugas</p>
+      </div>
 
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Username</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="loginUsername" required placeholder="Contoh: admin" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+        </div>
 
-<!-- HERO / METRICS SUMMARY CARDS -->
-<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-  
-  <!-- Total Items -->
-  <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
-      <i class="fa-solid fa-box font-bold"></i>
-    </div>
-    <div>
-      <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Item</p>
-      <h3 class="text-2xl font-bold text-slate-900 mt-0.5" id="metricTotalItems">0</h3>
-    </div>
-  </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+        </div>
 
-  <!-- Total Stock Units -->
-  <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-      <i class="fa-solid fa-layer-group"></i>
-    </div>
-    <div>
-      <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Units Stok</p>
-      <h3 class="text-2xl font-bold text-slate-900 mt-0.5" id="metricTotalUnits">0</h3>
-    </div>
-  </div>
-
-  <!-- Low Stock Warning -->
-  <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-    </div>
-    <div>
-      <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Stok Kritis (&lt;10)</p>
-      <h3 class="text-2xl font-bold text-slate-900 mt-0.5" id="metricLowStock">0</h3>
+        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-600/30 transition">
+          Log In Sekarang
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- Categories Count -->
-  <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-      <i class="fa-solid fa-tags"></i>
-    </div>
-    <div>
-      <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Kategori</p>
-      <h3 class="text-2xl font-bold text-slate-900 mt-0.5" id="metricCategories">0</h3>
+  <!-- MODAL 2: TAMBAH DATA BARANG -->
+  <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-all duration-300 relative">
+      <button onclick="closeAddModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+          <i class="fa-solid fa-plus font-bold"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Tambah Barang Baru</h3>
+          <p class="text-xs text-slate-500">Data akan tersimpan secara otomatis di Google Spreadsheet</p>
+        </div>
+      </div>
+
+      <form id="addForm" onsubmit="handleAddData(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Barang</label>
+          <input type="text" id="addNamaBarang" required placeholder="Contoh: Laptop Asus ROG" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Jumlah Stok</label>
+            <input type="number" min="0" id="addStok" required placeholder="0" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kategori</label>
+            <input type="text" id="addKategori" required placeholder="Elektronik, ATK, dll" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-semibold transition">Batal</button>
+          <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition">Simpan Data</button>
+        </div>
+      </form>
     </div>
   </div>
 
-</section>
+  <!-- MODAL 3: EDIT DATA BARANG -->
+  <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-all duration-300 relative">
+      <button onclick="closeEditModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
 
-<!-- VISUAL CHART SECTION -->
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  
-  <!-- Bar Chart -->
-  <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-bold text-slate-900 text-base">Distribusi Stok Barang</h3>
-      <span class="text-xs text-slate-400">Visualisasi Stok</span>
-    </div>
-    <div class="h-64">
-      <canvas id="stockChart"></canvas>
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Edit Data Barang</h3>
+          <p class="text-xs text-slate-500">Perbarui rincian informasi stok atau nama barang</p>
+        </div>
+      </div>
+
+      <form id="editForm" onsubmit="handleEditData(event)" class="space-y-4">
+        <input type="hidden" id="editId">
+        
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">ID Barang</label>
+          <input type="text" id="displayEditId" disabled class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 font-bold">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Barang</label>
+          <input type="text" id="editNamaBarang" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Jumlah Stok</label>
+            <input type="number" min="0" id="editStok" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Kategori</label>
+            <input type="text" id="editKategori" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-medium">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-semibold transition">Batal</button>
+          <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-bold shadow-md shadow-amber-600/20 transition">Simpan Perubahan</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Category Doughnut Chart -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-bold text-slate-900 text-base">Proporsi Kategori</h3>
-      <span class="text-xs text-slate-400">Porsi Kategori</span>
-    </div>
-    <div class="h-64 flex items-center justify-center">
-      <canvas id="categoryChart"></canvas>
+  <!-- MODAL 4: PENGATURAN API GOOGLE APPS SCRIPT -->
+  <div id="configModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-all duration-300 relative">
+      <button onclick="closeConfigModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3">
+          <i class="fa-solid fa-gear"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800">Pengaturan API Apps Script</h3>
+        <p class="text-xs text-slate-500 mt-1">Tempelkan URL Web App hasil deploy dari Google Apps Script</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Web App URL</label>
+          <textarea id="inputGasUrl" rows="3" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+        </div>
+
+        <button onclick="saveApiConfig()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition shadow-lg">
+          Simpan & Hubungkan
+        </button>
+      </div>
     </div>
   </div>
 
-</section>
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 1. CONFIGURATION & STATE MANAGEMENT
+    const DEFAULT_GAS_URL = "PASANG_URL_GOOGLE_APPS_SCRIPT_DI_SINI";
+    let GAS_API_URL = localStorage.getItem('GAS_API_URL') || DEFAULT_GAS_URL;
+    let currentUser = JSON.parse(sessionStorage.getItem('user')) || { role: 'GUEST' };
+    let inventoryData = [];
+    let myChart = null;
 
-<!-- DATA TABLE & CONTROLS SECTION -->
-<section class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-  
-  <!-- Toolbar Header -->
-  <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-    
-    <div>
-      <h2 class="text-lg font-bold text-slate-900">Manajemen Inventaris</h2>
-      <p class="text-xs text-slate-500 mt-0.5">Data terhubung langsung dengan Google Spreadsheet</p>
-    </div>
+    // 2. INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      checkApiConfigAlert();
+      renderUserRoleUI();
+      loadData();
+    });
 
-    <!-- Controls (Search, Filter, Action Buttons) -->
-    <div class="flex flex-wrap items-center gap-3">
+    function checkApiConfigAlert() {
+      const warningBanner = document.getElementById('apiConfigWarning');
+      if (GAS_API_URL === DEFAULT_GAS_URL || !GAS_API_URL) {
+        warningBanner.classList.remove('hidden');
+      } else {
+        warningBanner.classList.add('hidden');
+      }
+    }
+
+    // 3. UI RENDERER BASED ON ROLE
+    function renderUserRoleUI() {
+      const sidebarUsername = document.getElementById('sidebarUsername');
+      const sidebarRoleBadge = document.getElementById('sidebarRoleBadge');
+      const userAvatar = document.getElementById('userAvatar');
+      const btnLogin = document.getElementById('btnLogin');
+      const btnLogout = document.getElementById('btnLogout');
+      const btnTambahBarang = document.getElementById('btnTambahBarang');
+      const thActionHeader = document.getElementById('thActionHeader');
       
-      <!-- Search Bar -->
-      <div class="relative min-w-[200px]">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="text" id="searchInput" oninput="handleSearchAndFilter()" placeholder="Cari nama / ID..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
-      </div>
+      const accessTitle = document.getElementById('accessRoleTitle');
+      const accessDesc = document.getElementById('accessRoleDesc');
+      const accessBadge = document.getElementById('accessRoleBadge');
 
-      <!-- Category Filter -->
-      <select id="categoryFilter" onchange="handleSearchAndFilter()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
-        <option value="ALL">Semua Kategori</option>
-      </select>
+      if (currentUser.role === 'GUEST') {
+        sidebarUsername.innerText = 'Guest User';
+        sidebarRoleBadge.innerText = 'GUEST';
+        sidebarRoleBadge.className = 'inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-slate-700 text-slate-300';
+        userAvatar.innerText = 'G';
+        userAvatar.className = 'w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold';
 
-      <!-- Refresh Data Button -->
-      <button onclick="fetchData()" title="Muat ulang data" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center space-x-1">
-        <i class="fa-solid fa-arrows-rotate text-xs"></i>
-      </button>
+        btnLogin.classList.remove('hidden');
+        btnLogout.classList.add('hidden');
+        btnTambahBarang.classList.add('hidden');
+        thActionHeader.classList.add('hidden');
 
-      <!-- Add Data Button (Restricted to PETUGAS & ADMIN) -->
-      <button id="btnAddData" onclick="openAddModal()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm shadow-emerald-500/20">
-        <i class="fa-solid fa-plus"></i>
-        <span>Tambah Barang</span>
-      </button>
+        accessTitle.innerText = 'Akses: Guest';
+        accessDesc.innerText = 'Sebagai Guest, Anda dapat melihat seluruh data inventaris secara real-time tanpa izin untuk menambah, mengubah, atau menghapus data.';
+        accessBadge.innerText = 'READ-ONLY';
+        accessBadge.className = 'font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20';
+      } else {
+        sidebarUsername.innerText = currentUser.username || 'User';
+        sidebarRoleBadge.innerText = currentUser.role;
+        sidebarRoleBadge.className = currentUser.role === 'ADMIN' 
+          ? 'inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30'
+          : 'inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
 
-    </div>
-  </div>
+        userAvatar.innerText = (currentUser.username || 'U').charAt(0).toUpperCase();
+        userAvatar.className = currentUser.role === 'ADMIN'
+          ? 'w-10 h-10 rounded-full bg-rose-600 text-white font-bold flex items-center justify-center shadow-lg shadow-rose-600/30'
+          : 'w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center shadow-lg shadow-emerald-600/30';
 
-  <!-- Table Wrapper -->
-  <div class="overflow-x-auto custom-scrollbar">
-    <table class="w-full text-left text-sm text-slate-600">
-      <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200 uppercase text-xs tracking-wider">
-        <tr>
-          <th class="px-6 py-4">ID Barang</th>
-          <th class="px-6 py-4">Nama Barang</th>
-          <th class="px-6 py-4">Kategori</th>
-          <th class="px-6 py-4">Jumlah Stok</th>
-          <th class="px-6 py-4">Status</th>
-          <th class="px-6 py-4 text-right actionCol hidden">Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="inventoryTableBody" class="divide-y divide-slate-100">
-        <!-- Dynamic rows will be inserted here -->
-      </tbody>
-    </table>
-  </div>
+        btnLogin.classList.add('hidden');
+        btnLogout.classList.remove('hidden');
+        btnTambahBarang.classList.remove('hidden');
+        thActionHeader.classList.remove('hidden');
 
-  <!-- Empty State / Loading Indicator Container -->
-  <div id="tableStateContainer" class="p-12 text-center hidden">
-    <!-- Injected dynamically -->
-  </div>
+        if (currentUser.role === 'ADMIN') {
+          accessTitle.innerText = 'Akses: Administrator';
+          accessDesc.innerText = 'Anda memiliki kontrol penuh atas sistem inventaris ini, termasuk menambah, mengedit, serta menghapus data barang dari spreadsheet.';
+          accessBadge.innerText = 'FULL ACCESS (CRUD)';
+          accessBadge.className = 'font-bold text-rose-400 bg-rose-400/10 px-2.5 py-1 rounded-full border border-rose-400/20';
+        } else {
+          accessTitle.innerText = 'Akses: Petugas';
+          accessDesc.innerText = 'Sebagai Petugas, Anda dapat menambah barang baru dan memperbarui data stok. Akses hapus terbatas khusus untuk Administrator.';
+          accessBadge.innerText = 'CREATE & UPDATE';
+          accessBadge.className = 'font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20';
+        }
+      }
 
-</section>
+      renderTableRows();
+    }
 
+    // 4. API CALL ENGINE
+    async function apiCall(payload) {
+      if (!GAS_API_URL || GAS_API_URL === DEFAULT_GAS_URL) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'URL Apps Script Belum Dimasukkan',
+          text: 'Silakan atur Web App URL Google Apps Script Anda di Pengaturan API terlebih dahulu!',
+          confirmColor: '#0284c7'
+        });
+        openConfigModal();
+        return { success: false };
+      }
 
-  <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="p-6 space-y-4">
-    <div>
-      <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Username</label>
-      <div class="relative">
-        <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="text" id="loginUsername" required class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white" placeholder="Contoh: admin / petugas">
-      </div>
-    </div>
+      showLoading(true);
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        showLoading(false);
+        return result;
+      } catch (err) {
+        showLoading(false);
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Terhubung',
+          text: 'Tidak dapat menghubungi server Apps Script. Pastikan Web App diset ke "Anyone".',
+          confirmColor: '#0284c7'
+        });
+        return { success: false };
+      }
+    }
 
-    <div>
-      <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Password</label>
-      <div class="relative">
-        <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="password" id="loginPassword" required class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white" placeholder="••••••••">
-      </div>
-    </div>
+    // 5. FETCH DATA & CALCULATION
+    async function loadData() {
+      const result = await apiCall({ action: 'READ' });
+      if (result.success) {
+        inventoryData = result.data || [];
+        updateKpiMetrics();
+        populateCategoryDropdown();
+        renderChart();
+        filterTable();
+      }
+    }
 
-    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-800 flex items-start space-x-2">
-      <i class="fa-solid fa-circle-info mt-0.5 text-blue-500"></i>
-      <div>
-        <p class="font-semibold">Informasi Akun Default:</p>
-        <p>Admin: <code>admin</code> / <code>admin123</code></p>
-        <p>Petugas: <code>petugas</code> / <code>petugas123</code></p>
-      </div>
-    </div>
+    function updateKpiMetrics() {
+      const totalItems = inventoryData.length;
+      const totalStock = inventoryData.reduce((acc, item) => acc + (parseInt(item.stok) || 0), 0);
+      const lowStockCount = inventoryData.filter(item => (parseInt(item.stok) || 0) < 10).length;
 
-    <div class="pt-2">
-      <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition shadow-md shadow-brand-500/20">
-        Masuk ke Sistem
-      </button>
-    </div>
-  </form>
-</div>
+      // Find Top Category
+      const catCounts = {};
+      inventoryData.forEach(item => {
+        const cat = item.kategori || 'Lainnya';
+        catCounts[cat] = (catCounts[cat] || 0) + 1;
+      });
+      let topCategory = '-';
+      let maxCount = 0;
+      for (const [cat, count] of Object.entries(catCounts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          topCategory = cat;
+        }
+      }
 
+      document.getElementById('statTotalItems').innerText = totalItems.toLocaleString('id-ID');
+      document.getElementById('statTotalStock').innerText = totalStock.toLocaleString('id-ID');
+      document.getElementById('statLowStock').innerText = lowStockCount.toLocaleString('id-ID');
+      document.getElementById('statTopCategory').innerText = topCategory;
+    }
 
-  <form id="itemForm" onsubmit="handleItemFormSubmit(event)" class="p-6 space-y-4">
-    <input type="hidden" id="itemId">
+    function populateCategoryDropdown() {
+      const select = document.getElementById('filterCategory');
+      const categories = [...new Set(inventoryData.map(i => i.kategori).filter(Boolean))];
+      
+      select.innerHTML = '<option value="">Semua Kategori</option>';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
 
-    <div>
-      <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama Barang</label>
-      <input type="text" id="itemName" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white" placeholder="Contoh: Laptop ThinkPad T14">
-    </div>
+    // 6. RENDER TABLE ROWS
+    function renderTableRows(filteredList = inventoryData) {
+      const tbody = document.getElementById('inventoryTableBody');
+      const emptyState = document.getElementById('emptyState');
+      tbody.innerHTML = '';
 
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Jumlah Stok</label>
-        <input type="number" id="itemStock" min="0" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white" placeholder="0">
-      </div>
+      document.getElementById('visibleRowsCount').innerText = filteredList.length;
+      document.getElementById('totalRowsCount').innerText = inventoryData.length;
 
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Kategori</label>
-        <input type="text" id="itemCategory" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white" placeholder="Elektronik, Kantor, dll">
-      </div>
-    </div>
+      if (filteredList.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+      }
 
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" onclick="closeModal('itemModal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
-        Batal
-      </button>
-      <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition shadow-md shadow-brand-500/20">
-        Simpan Data
-      </button>
-    </div>
-  </form>
-</div>
+      filteredList.forEach(item => {
+        const stokNum = parseInt(item.stok) || 0;
+        let stockBadge = '';
+        if (stokNum === 0) {
+          stockBadge = `<span class="px-2.5 py-1 text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-xmark text-[10px]"></i> Habis</span>`;
+        } else if (stokNum < 10) {
+          stockBadge = `<span class="px-2.5 py-1 text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-exclamation text-[10px]"></i> Menipis</span>`;
+        } else {
+          stockBadge = `<span class="px-2.5 py-1 text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-check text-[10px]"></i> Aman</span>`;
+        }
 
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition';
+        
+        let rowHTML = `
+          <td class="py-3.5 px-6 font-mono text-xs font-bold text-slate-500">${item.id}</td>
+          <td class="py-3.5 px-6 font-semibold text-slate-800">${escapeHtml(item.namaBarang)}</td>
+          <td class="py-3.5 px-6"><span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium">${escapeHtml(item.kategori || '-')}</span></td>
+          <td class="py-3.5 px-6 font-bold text-slate-700">${stokNum.toLocaleString('id-ID')}</td>
+          <td class="py-3.5 px-6">${stockBadge}</td>
+        `;
 
-  <div class="p-6 space-y-4">
-    <div>
-      <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Web App URL (Apps Script)</label>
-      <input type="text" id="apiUrlInput" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="https://script.google.com/macros/s/.../exec">
-    </div>
-    <p class="text-xs text-slate-500">URL ini tersimpan di memori browser Anda (localStorage) untuk pengujian cepat.</p>
+        if (currentUser.role !== 'GUEST') {
+          rowHTML += `<td class="py-3.5 px-6 text-right space-x-1 whitespace-nowrap">
+            <button onclick="openEditModal('${item.id}', '${escapeJs(item.namaBarang)}', ${stokNum}, '${escapeJs(item.kategori)}')" class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Edit Data">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>`;
+          if (currentUser.role === 'ADMIN') {
+            rowHTML += `<button onclick="handleDeleteData('${item.id}')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Data">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>`;
+          }
+          rowHTML += `</td>`;
+        }
 
-    <div class="flex justify-end space-x-3 pt-2">
-      <button type="button" onclick="closeModal('apiConfigModal')" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
-        Batal
-      </button>
-      <button type="button" onclick="saveApiUrlConfig()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition">
-        Simpan Konfigurasi
-      </button>
-    </div>
-  </div>
-</div>
+        tr.innerHTML = rowHTML;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // FILTER TABLE FUNCTION
+    function filterTable() {
+      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+      const catVal = document.getElementById('filterCategory').value;
+      const stockStatusVal = document.getElementById('filterStockStatus').value;
+
+      const filtered = inventoryData.filter(item => {
+        const matchesSearch = (item.namaBarang || '').toLowerCase().includes(searchVal) || (item.id || '').toLowerCase().includes(searchVal);
+        const matchesCat = catVal === '' || item.kategori === catVal;
+        
+        const stokNum = parseInt(item.stok) || 0;
+        let matchesStock = true;
+        if (stockStatusVal === 'normal') matchesStock = stokNum >= 10;
+        if (stockStatusVal === 'low') matchesStock = stokNum < 10 && stokNum > 0;
+        if (stockStatusVal === 'empty') matchesStock = stokNum === 0;
+
+        return matchesSearch && matchesCat && matchesStock;
+      });
+
+      renderTableRows(filtered);
+    }
+
+    // 7. CHART VISUALIZATION
+    function renderChart() {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      const catCounts = {};
+      
+      inventoryData.forEach(item => {
+        const cat = item.kategori || 'Lainnya';
+        catCounts[cat] = (catCounts[cat] || 0) + (parseInt(item.stok) || 0);
+      });
+
+      const labels = Object.keys(catCounts);
+      const dataValues = Object.values(catCounts);
+
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.length ? labels : ['Belum Ada Data'],
+          datasets: [{
+            label: 'Total Unit Stok',
+            data: dataValues.length ? dataValues : [0],
+            backgroundColor: '#0284c7',
+            borderRadius: 8,
+            hoverBackgroundColor: '#0369a1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // 8. ACTION HANDLERS (LOGIN, CREATE, UPDATE, DELETE)
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await apiCall({ action: 'LOGIN', username, password });
+      if (res.success) {
+        currentUser = res.user;
+        sessionStorage.setItem('user', JSON.stringify(currentUser));
+        closeLoginModal();
+        document.getElementById('loginForm').reset();
+        renderUserRoleUI();
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil Login!',
+          text: `Selamat datang kembali, ${currentUser.username} (${currentUser.role})`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal Login',
+          text: res.message || 'Username atau password salah!',
+          confirmColor: '#0284c7'
+        });
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('user');
+      currentUser = { role: 'GUEST' };
+      renderUserRoleUI();
+      Swal.fire({
+        icon: 'info',
+        title: 'Logged Out',
+        text: 'Anda telah kembali ke status Guest (Tanpa Login)',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+
+    async function handleAddData(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'CREATE',
+        role: currentUser.role,
+        namaBarang: document.getElementById('addNamaBarang').value,
+        stok: document.getElementById('addStok').value,
+        kategori: document.getElementById('addKategori').value
+      };
+
+      const res = await apiCall(payload);
+      if (res.success) {
+        closeAddModal();
+        document.getElementById('addForm').reset();
+        loadData();
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Barang baru berhasil ditambahkan ke spreadsheet.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+      }
+    }
+
+    async function handleEditData(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'UPDATE',
+        role: currentUser.role,
+        id: document.getElementById('editId').value,
+        namaBarang: document.getElementById('editNamaBarang').value,
+        stok: document.getElementById('editStok').value,
+        kategori: document.getElementById('editKategori').value
+      };
+
+      const res = await apiCall(payload);
+      if (res.success) {
+        closeEditModal();
+        loadData();
+        Swal.fire({
+          icon: 'success',
+          title: 'Diperbarui!',
+          text: 'Data barang berhasil diperbarui.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+      }
+    }
+
+    async function handleDeleteData(id) {
+      const confirm = await Swal.fire({
+        title: 'Hapus Barang Ini?',
+        text: 'Data akan dihapus secara permanen dari spreadsheet!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Hapus Sekarang',
+        cancelButtonText: 'Batal'
+      });
+
+      if (confirm.isConfirmed) {
+        const res = await apiCall({ action: 'DELETE', role: currentUser.role, id });
+        if (res.success) {
+          loadData();
+          Swal.fire({
+            icon: 'success',
+            title: 'Terhapus!',
+            text: 'Barang berhasil dihapus.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+        }
+      }
+    }
+
+    // 9. HELPER MODAL & UTILITIES
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
+    function openLoginModal() {
+      toggleModal('loginModal', true);
+    }
+    function closeLoginModal() {
+      toggleModal('loginModal', false);
+    }
+
+    function openAddModal() {
+      toggleModal('addModal', true);
+    }
+    function closeAddModal() {
+      toggleModal('addModal', false);
+    }
+
+    function openEditModal(id, nama, stok, kategori) {
+      document.getElementById('editId').value = id;
+      document.getElementById('displayEditId').value = id;
+      document.getElementById('editNamaBarang').value = nama;
+      document.getElementById('editStok').value = stok;
+      document.getElementById('editKategori').value = kategori;
+      toggleModal('editModal', true);
+    }
+    function closeEditModal() {
+      toggleModal('editModal', false);
+    }
+
+    function openConfigModal() {
+      document.getElementById('inputGasUrl').value = GAS_API_URL === DEFAULT_GAS_URL ? '' : GAS_API_URL;
+      toggleModal('configModal', true);
+    }
+    function closeConfigModal() {
+      toggleModal('configModal', false);
+    }
+
+    function saveApiConfig() {
+      const url = document.getElementById('inputGasUrl').value.trim();
+      if (url) {
+        localStorage.setItem('GAS_API_URL', url);
+        GAS_API_URL = url;
+        checkApiConfigAlert();
+        closeConfigModal();
+        loadData();
+        Swal.fire({
+          icon: 'success',
+          title: 'Konfigurasi Tersimpan',
+          text: 'URL Apps Script berhasil diperbarui!',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    }
+
+    function toggleModal(modalId, show) {
+      const modal = document.getElementById(modalId);
+      const child = modal.firstElementChild;
+      if (show) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        child.classList.remove('scale-95');
+        child.classList.add('scale-100');
+      } else {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        child.classList.remove('scale-100');
+        child.classList.add('scale-95');
+      }
+    }
+
+    function exportToCSV() {
+      if (!inventoryData.length) {
+        Swal.fire({ icon: 'info', title: 'Data Kosong', text: 'Tidak ada data untuk diekspor.' });
+        return;
+      }
+      let csvContent = "data:text/csv;charset=utf-8,ID,Nama Barang,Kategori,Stok\n";
+      inventoryData.forEach(row => {
+        csvContent += `"${row.id}","${row.namaBarang}","${row.kategori}","${row.stok}"\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `inventaris_barang_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function escapeJs(str) {
+      return (str || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+</body>
+</html>
