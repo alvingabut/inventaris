@@ -1,710 +1,270 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe vs AI</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --primary-x: #38bdf8;
-            --primary-o: #f43f5e;
-            --accent: #6366f1;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --win-color: #10b981;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 450px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        header {
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 2.25rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, var(--primary-x), var(--primary-o));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.25rem;
-        }
-
-        header p {
-            color: var(--text-sub);
-            font-size: 0.9rem;
-        }
-
-        /* Controls / Settings Panel */
-        .settings-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1rem 1.25rem;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .setting-label {
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-group {
-            display: flex;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 4px;
-            border-radius: 10px;
-            gap: 4px;
-        }
-
-        .btn-option {
-            background: transparent;
-            border: none;
-            color: var(--text-sub);
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-option.active {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
-        }
-
-        /* Scoreboard */
-        .scoreboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
-            width: 100%;
-        }
-
-        .score-box {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 0.75rem 0.5rem;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            transition: transform 0.2s ease;
-        }
-
-        .score-box.active-turn {
-            border-color: var(--accent);
-            transform: scale(1.02);
-        }
-
-        .score-label {
-            font-size: 0.75rem;
-            color: var(--text-sub);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .score-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-
-        .score-box.player .score-value { color: var(--primary-x); }
-        .score-box.ties .score-value { color: var(--text-main); }
-        .score-box.bot .score-value { color: var(--primary-o); }
-
-        /* Game Board */
-        .board-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .cell {
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cell:hover:not(.taken) {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateY(-2px);
-        }
-
-        .cell.x {
-            color: var(--primary-x);
-            text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-        }
-
-        .cell.o {
-            color: var(--primary-o);
-            text-shadow: 0 0 15px rgba(244, 63, 94, 0.5);
-        }
-
-        .cell.pop {
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .cell.win-cell {
-            background: rgba(16, 185, 129, 0.2);
-            border: 2px solid var(--win-color);
-            animation: pulseWin 1s infinite alternate;
-        }
-
-        /* Action Buttons */
-        .actions {
-            display: flex;
-            gap: 0.75rem;
-            width: 100%;
-        }
-
-        .btn-action {
-            flex: 1;
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            padding: 0.85rem;
-            font-size: 0.95rem;
-            font-weight: 700;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .btn-action:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .btn-action:active {
-            transform: translateY(0);
-        }
-
-        .btn-action.primary {
-            background: linear-gradient(135deg, var(--accent), #4f46e5);
-            border: none;
-        }
-
-        .btn-action.primary:hover {
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-        }
-
-        /* Status Toast / Banner */
-        .status-banner {
-            font-size: 1.1rem;
-            font-weight: 700;
-            height: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        /* Animations */
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes pulseWin {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.03); }
-        }
-
-        /* Sound Control Toggle */
-        .sound-toggle {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-sub);
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Aplikasi Inventaris</title>
+  <!-- Integrasi Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Animasi Loading Custom */
+    .loader {
+      border-top-color: #3b82f6;
+      -webkit-animation: spinner 1s linear infinite;
+      animation: spinner 1s linear infinite;
+    }
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans text-gray-800">
+  
+  <!-- Navbar -->
+  <nav class="bg-blue-600 p-4 shadow-md text-white sticky top-0 z-50">
+    <div class="container mx-auto flex items-center">
+      <i class="fas fa-boxes text-2xl mr-3"></i>
+      <h1 class="text-xl font-bold tracking-wide">InventarisKu</h1>
+    </div>
+  </nav>
 
-    <button class="sound-toggle" id="soundBtn" title="Mute/Unmute Audio">🔊</button>
-
-    <div class="container">
-        <header>
-            <h1>TIC TAC TOE</h1>
-            <p>Tantang Bot AI & Buktikan Keahlianmu!</p>
-        </header>
-
-        <!-- Settings Bar -->
-        <div class="settings-card">
-            <div class="setting-row">
-                <span class="setting-label">Tingkat Kesulitan</span>
-                <div class="btn-group" id="difficultyGroup">
-                    <button class="btn-option" data-val="easy">Easy</button>
-                    <button class="btn-option" data-val="medium">Medium</button>
-                    <button class="btn-option active" data-val="hard">Hard</button>
-                </div>
+  <!-- Layout Utama -->
+  <div class="container mx-auto mt-8 px-4 flex flex-col lg:flex-row gap-8 pb-10">
+    
+    <!-- Kolom Kiri: Form Input -->
+    <div class="w-full lg:w-1/3">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
+        <h2 class="text-lg font-bold mb-5 text-gray-700 border-b pb-2" id="formTitle">Tambah Barang Baru</h2>
+        
+        <form id="inventoryForm" onsubmit="handleFormSubmit(event)">
+          <input type="hidden" id="itemId">
+          
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">Nama Barang</label>
+            <input type="text" id="nama" required placeholder="Contoh: Laptop Asus" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition">
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">SKU / Kode</label>
+            <input type="text" id="sku" required placeholder="SKU-001" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition">
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">Kategori</label>
+            <select id="kategori" required class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition">
+              <option value="">-- Pilih Kategori --</option>
+              <option value="Elektronik">Elektronik</option>
+              <option value="Pakaian">Pakaian</option>
+              <option value="Makanan">Makanan</option>
+              <option value="Furnitur">Furnitur</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-4 mb-6">
+            <div class="w-1/3">
+              <label class="block text-gray-600 text-sm font-semibold mb-2">Jumlah</label>
+              <input type="number" id="jumlah" required min="0" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition">
             </div>
-            <div class="setting-row">
-                <span class="setting-label">Simbol Anda</span>
-                <div class="btn-group" id="symbolGroup">
-                    <button class="btn-option active" data-val="X">X (Awal)</button>
-                    <button class="btn-option" data-val="O">O (Kedua)</button>
-                </div>
+            <div class="w-2/3">
+              <label class="block text-gray-600 text-sm font-semibold mb-2">Harga (Rp)</label>
+              <input type="number" id="harga" required min="0" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 focus:bg-white transition">
             </div>
-        </div>
-
-        <!-- Scoreboard -->
-        <div class="scoreboard">
-            <div class="score-box player" id="scorePlayerBox">
-                <span class="score-label" id="playerLabel">Pemain (X)</span>
-                <span class="score-value" id="scorePlayer">0</span>
-            </div>
-            <div class="score-box ties">
-                <span class="score-label">Seri</span>
-                <span class="score-value" id="scoreTies">0</span>
-            </div>
-            <div class="score-box bot" id="scoreBotBox">
-                <span class="score-label" id="botLabel">Bot (O)</span>
-                <span class="score-value" id="scoreBot">0</span>
-            </div>
-        </div>
-
-        <!-- Status display -->
-        <div class="status-banner" id="statusBanner">Giliran Anda!</div>
-
-        <!-- Game Board -->
-        <div class="board-container" id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-        </div>
-
-        <!-- Actions -->
-        <div class="actions">
-            <button class="btn-action primary" id="resetBtn">↻ Main Lagi</button>
-            <button class="btn-action" id="resetScoreBtn">🗑 Reset Skor</button>
-        </div>
+          </div>
+          
+          <div class="flex gap-3">
+            <button type="submit" id="submitBtn" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg shadow hover:bg-blue-700 w-full font-medium transition-colors flex justify-center items-center">
+              <i class="fas fa-save mr-2"></i> Simpan
+            </button>
+            <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg shadow hover:bg-gray-300 transition-colors font-medium">
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <script>
-        // Web Audio API Synthesizer (No external asset dependency)
-        class SoundFX {
-            constructor() {
-                this.ctx = null;
-                this.muted = false;
-            }
+    <!-- Kolom Kanan: Tabel Data -->
+    <div class="w-full lg:w-2/3">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h2 class="text-lg font-bold text-gray-700">Daftar Inventaris</h2>
+          
+          <!-- Indikator Loading -->
+          <div id="loading" class="hidden flex items-center text-blue-600 mt-2 sm:mt-0">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-5 w-5 mr-2"></div>
+            <span class="text-sm font-semibold animate-pulse">Menyinkronkan Data...</span>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+          <table class="w-full text-left whitespace-nowrap">
+            <thead>
+              <tr class="bg-gray-50 text-gray-600 text-sm border-b">
+                <th class="p-4 font-semibold">Nama & SKU</th>
+                <th class="p-4 font-semibold">Kategori</th>
+                <th class="p-4 font-semibold text-center">Stok</th>
+                <th class="p-4 font-semibold text-right">Harga Satuan</th>
+                <th class="p-4 font-semibold text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="text-sm divide-y divide-gray-100">
+              <!-- Data Javascript akan masuk ke sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            }
+  <script>
+    let inventoryData = [];
 
-            playTone(freq, type, duration) {
-                if (this.muted) return;
-                this.init();
-                try {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = type;
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + duration);
-                } catch (e) {
-                    // Ignore AudioContext restrictions prior to user gesture
-                }
-            }
+    // Helper: Format angka menjadi format Rupiah
+    const formatRupiah = (angka) => {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    }
 
-            click() { this.playTone(400, 'sine', 0.1); }
-            botMove() { this.playTone(300, 'triangle', 0.15); }
-            win() {
-                if (this.muted) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-                    setTimeout(() => this.playTone(freq, 'sine', 0.25), idx * 100);
-                });
-            }
-            lose() {
-                if (this.muted) return;
-                this.init();
-                [400, 350, 300, 250].forEach((freq, idx) => {
-                    setTimeout(() => this.playTone(freq, 'sawtooth', 0.2), idx * 120);
-                });
-            }
-            tie() {
-                if (this.muted) return;
-                this.init();
-                [350, 350].forEach((freq, idx) => {
-                    setTimeout(() => this.playTone(freq, 'square', 0.15), idx * 150);
-                });
-            }
-        }
+    // Memuat data pertama kali web dibuka
+    window.onload = () => loadData();
 
-        const sound = new SoundFX();
+    function toggleLoading(show) {
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = show;
+      show ? submitBtn.classList.add('opacity-70', 'cursor-not-allowed') : submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+    }
 
-        // Game State Variables
-        let boardState = Array(9).fill('');
-        let playerSymbol = 'X';
-        let botSymbol = 'O';
-        let currentTurn = 'X';
-        let difficulty = 'hard';
-        let isGameActive = true;
+    // READ Data via GAS
+    function loadData() {
+      toggleLoading(true);
+      google.script.run.withSuccessHandler(function(data) {
+        inventoryData = data;
+        renderTable();
+        toggleLoading(false);
+      }).getItems();
+    }
 
-        let scores = { player: 0, ties: 0, bot: 0 };
+    // Merender tabel di HTML
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
 
-        // Winning Combination Mapping
-        const WINNING_COMBOS = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-            [0, 4, 8], [2, 4, 6]             // Diagonals
-        ];
+      if(inventoryData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">Belum ada data barang di database.</td></tr>';
+        return;
+      }
 
-        // DOM Elements
-        const cells = document.querySelectorAll('.cell');
-        const statusBanner = document.getElementById('statusBanner');
-        const resetBtn = document.getElementById('resetBtn');
-        const resetScoreBtn = document.getElementById('resetScoreBtn');
-        const soundBtn = document.getElementById('soundBtn');
-        const scorePlayerEl = document.getElementById('scorePlayer');
-        const scoreTiesEl = document.getElementById('scoreTies');
-        const scoreBotEl = document.getElementById('scoreBot');
-        const playerLabelEl = document.getElementById('playerLabel');
-        const botLabelEl = document.getElementById('botLabel');
-        const scorePlayerBox = document.getElementById('scorePlayerBox');
-        const scoreBotBox = document.getElementById('scoreBotBox');
+      inventoryData.forEach(item => {
+        const isLowStock = item.jumlah < 5;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-blue-50 transition-colors';
+        tr.innerHTML = `
+          <td class="p-4">
+            <div class="font-bold text-gray-800">${item.nama}</div>
+            <div class="text-xs text-gray-500 font-mono mt-1"><i class="fas fa-barcode mr-1"></i>${item.sku}</div>
+          </td>
+          <td class="p-4">
+            <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-semibold">${item.kategori}</span>
+          </td>
+          <td class="p-4 text-center">
+            <span class="font-bold text-lg ${isLowStock ? 'text-red-500' : 'text-green-600'}">${item.jumlah}</span>
+            ${isLowStock ? '<div class="text-[10px] text-red-500 font-bold uppercase mt-1">Stok Menipis</div>' : ''}
+          </td>
+          <td class="p-4 text-right font-medium text-gray-700">${formatRupiah(item.harga)}</td>
+          <td class="p-4 text-center">
+            <button onclick="editItem('${item.id}')" class="bg-yellow-100 text-yellow-600 p-2 rounded hover:bg-yellow-200 mx-1 transition-colors tooltip" title="Edit">
+              <i class="fas fa-pen text-sm"></i>
+            </button>
+            <button onclick="deleteItem('${item.id}')" class="bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 mx-1 transition-colors tooltip" title="Hapus">
+              <i class="fas fa-trash text-sm"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-        // Initialization
-        function initGame() {
-            setupEventListeners();
-            resetGame();
-        }
+    // Submit Handler (Untuk Tambah atau Update)
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('itemId').value;
+      const item = {
+        nama: document.getElementById('nama').value,
+        sku: document.getElementById('sku').value,
+        kategori: document.getElementById('kategori').value,
+        jumlah: parseInt(document.getElementById('jumlah').value),
+        harga: parseInt(document.getElementById('harga').value)
+      };
 
-        function setupEventListeners() {
-            cells.forEach(cell => {
-                cell.addEventListener('click', handleCellClick);
-            });
+      toggleLoading(true);
+      if (id) {
+        // Mode UPDATE
+        google.script.run.withSuccessHandler(function(data) {
+          inventoryData = data;
+          renderTable();
+          resetForm();
+          toggleLoading(false);
+        }).updateItem(id, item);
+      } else {
+        // Mode CREATE
+        google.script.run.withSuccessHandler(function(data) {
+          inventoryData = data;
+          renderTable();
+          resetForm();
+          toggleLoading(false);
+        }).addItem(item);
+      }
+    }
 
-            resetBtn.addEventListener('click', () => {
-                sound.click();
-                resetGame();
-            });
+    // Persiapan UI saat tombol Edit ditekan
+    function editItem(id) {
+      const item = inventoryData.find(i => i.id === id);
+      if (item) {
+        document.getElementById('itemId').value = item.id;
+        document.getElementById('nama').value = item.nama;
+        document.getElementById('sku').value = item.sku;
+        document.getElementById('kategori').value = item.kategori;
+        document.getElementById('jumlah').value = item.jumlah;
+        document.getElementById('harga').value = item.harga;
+        
+        document.getElementById('formTitle').innerText = 'Edit Data Barang';
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-check mr-2"></i> Update Barang';
+        document.getElementById('submitBtn').classList.replace('bg-blue-600', 'bg-green-600');
+        document.getElementById('submitBtn').classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+        document.getElementById('cancelBtn').classList.remove('hidden');
+        
+        // Scroll layar ke form (berguna di mode mobile)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
 
-            resetScoreBtn.addEventListener('click', () => {
-                sound.click();
-                scores = { player: 0, ties: 0, bot: 0 };
-                updateScoreboard();
-                resetGame();
-            });
+    // Hapus data dengan konfirmasi
+    function deleteItem(id) {
+      if(confirm('Data ini akan dihapus secara permanen dari Spreadsheet. Anda yakin?')) {
+        toggleLoading(true);
+        google.script.run.withSuccessHandler(function(data) {
+          inventoryData = data;
+          renderTable();
+          toggleLoading(false);
+        }).deleteItem(id);
+      }
+    }
 
-            soundBtn.addEventListener('click', () => {
-                sound.muted = !sound.muted;
-                soundBtn.textContent = sound.muted ? '🔇' : '🔊';
-            });
-
-            // Difficulty Setting Selector
-            document.getElementById('difficultyGroup').addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-option')) {
-                    sound.click();
-                    document.querySelectorAll('#difficultyGroup .btn-option').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    difficulty = e.target.getAttribute('data-val');
-                    resetGame();
-                }
-            });
-
-            // Symbol Setting Selector
-            document.getElementById('symbolGroup').addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-option')) {
-                    sound.click();
-                    document.querySelectorAll('#symbolGroup .btn-option').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    playerSymbol = e.target.getAttribute('data-val');
-                    botSymbol = playerSymbol === 'X' ? 'O' : 'X';
-                    
-                    playerLabelEl.textContent = `Pemain (${playerSymbol})`;
-                    botLabelEl.textContent = `Bot (${botSymbol})`;
-                    
-                    resetGame();
-                }
-            });
-        }
-
-        function resetGame() {
-            boardState = Array(9).fill('');
-            isGameActive = true;
-            currentTurn = 'X';
-
-            cells.forEach(cell => {
-                cell.textContent = '';
-                cell.className = 'cell';
-            });
-
-            updateTurnHighlight();
-
-            if (playerSymbol === 'X') {
-                statusBanner.textContent = 'Giliran Anda!';
-            } else {
-                statusBanner.textContent = 'Bot sedang berpikir...';
-                setTimeout(makeBotMove, 600);
-            }
-        }
-
-        function handleCellClick(e) {
-            const index = e.target.getAttribute('data-index');
-
-            if (boardState[index] !== '' || !isGameActive || currentTurn !== playerSymbol) {
-                return;
-            }
-
-            executeMove(index, playerSymbol);
-            sound.click();
-
-            if (isGameActive && currentTurn === botSymbol) {
-                statusBanner.textContent = 'Bot sedang berpikir...';
-                setTimeout(makeBotMove, 400);
-            }
-        }
-
-        function executeMove(index, symbol) {
-            boardState[index] = symbol;
-            const cell = cells[index];
-            cell.textContent = symbol;
-            cell.classList.add(symbol.toLowerCase(), 'taken', 'pop');
-
-            const winCombo = checkWin(boardState, symbol);
-            if (winCombo) {
-                handleGameOver(symbol, winCombo);
-            } else if (boardState.every(cell => cell !== '')) {
-                handleGameOver('TIE');
-            } else {
-                currentTurn = currentTurn === 'X' ? 'O' : 'X';
-                updateTurnHighlight();
-                if (currentTurn === playerSymbol) {
-                    statusBanner.textContent = 'Giliran Anda!';
-                }
-            }
-        }
-
-        function updateTurnHighlight() {
-            scorePlayerBox.classList.toggle('active-turn', currentTurn === playerSymbol && isGameActive);
-            scoreBotBox.classList.toggle('active-turn', currentTurn === botSymbol && isGameActive);
-        }
-
-        function handleGameOver(winner, winCombo = null) {
-            isGameActive = false;
-            updateTurnHighlight();
-
-            if (winner === playerSymbol) {
-                statusBanner.textContent = '🎉 Selamat! Anda Menang!';
-                scores.player++;
-                highlightWinningCells(winCombo);
-                sound.win();
-            } else if (winner === botSymbol) {
-                statusBanner.textContent = '🤖 Bot Menang!';
-                scores.bot++;
-                highlightWinningCells(winCombo);
-                sound.lose();
-            } else {
-                statusBanner.textContent = '🤝 Permainan Seri!';
-                scores.ties++;
-                sound.tie();
-            }
-
-            updateScoreboard();
-        }
-
-        function highlightWinningCells(combo) {
-            if (!combo) return;
-            combo.forEach(index => {
-                cells[index].classList.add('win-cell');
-            });
-        }
-
-        function updateScoreboard() {
-            scorePlayerEl.textContent = scores.player;
-            scoreTiesEl.textContent = scores.ties;
-            scoreBotEl.textContent = scores.bot;
-        }
-
-        function checkWin(board, symbol) {
-            for (let combo of WINNING_COMBOS) {
-                if (combo.every(idx => board[idx] === symbol)) {
-                    return combo;
-                }
-            }
-            return null;
-        }
-
-        // AI Logic Section
-        function makeBotMove() {
-            if (!isGameActive) return;
-
-            let bestIndex;
-            const emptyIndices = boardState.reduce((acc, val, idx) => val === '' ? acc.concat(idx) : acc, []);
-
-            if (difficulty === 'easy') {
-                // Random Pick
-                bestIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-            } else if (difficulty === 'medium') {
-                // 50% Minimax, 50% Random
-                if (Math.random() > 0.5) {
-                    bestIndex = minimax(boardState, botSymbol).index;
-                } else {
-                    bestIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-                }
-            } else {
-                // Hard (Unbeatable Minimax Algorithm)
-                bestIndex = minimax(boardState, botSymbol).index;
-            }
-
-            if (bestIndex !== undefined) {
-                executeMove(bestIndex, botSymbol);
-                sound.botMove();
-            }
-        }
-
-        // Minimax Algorithm Implementation
-        function minimax(newBoard, player) {
-            const availSpots = newBoard.reduce((acc, val, idx) => val === '' ? acc.concat(idx) : acc, []);
-
-            if (checkWin(newBoard, playerSymbol)) {
-                return { score: -10 };
-            } else if (checkWin(newBoard, botSymbol)) {
-                return { score: 10 };
-            } else if (availSpots.length === 0) {
-                return { score: 0 };
-            }
-
-            const moves = [];
-
-            for (let i = 0; i < availSpots.length; i++) {
-                const move = {};
-                move.index = availSpots[i];
-                newBoard[availSpots[i]] = player;
-
-                if (player === botSymbol) {
-                    const result = minimax(newBoard, playerSymbol);
-                    move.score = result.score;
-                } else {
-                    const result = minimax(newBoard, botSymbol);
-                    move.score = result.score;
-                }
-
-                newBoard[availSpots[i]] = '';
-                moves.push(move);
-            }
-
-            let bestMove;
-            if (player === botSymbol) {
-                let bestScore = -10000;
-                for (let i = 0; i < moves.length; i++) {
-                    if (moves[i].score > bestScore) {
-                        bestScore = moves[i].score;
-                        bestMove = i;
-                    }
-                }
-            } else {
-                let bestScore = 10000;
-                for (let i = 0; i < moves.length; i++) {
-                    if (moves[i].score < bestScore) {
-                        bestScore = moves[i].score;
-                        bestMove = i;
-                    }
-                }
-            }
-
-            return moves[bestMove];
-        }
-
-        // Initialize App on window load
-        window.onload = initGame;
-    </script>
+    // Mengembalikan form ke state awal (mode tambah)
+    function resetForm() {
+      document.getElementById('inventoryForm').reset();
+      document.getElementById('itemId').value = '';
+      
+      document.getElementById('formTitle').innerText = 'Tambah Barang Baru';
+      const btn = document.getElementById('submitBtn');
+      btn.innerHTML = '<i class="fas fa-save mr-2"></i> Simpan';
+      btn.classList.replace('bg-green-600', 'bg-blue-600');
+      btn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+      
+      document.getElementById('cancelBtn').classList.add('hidden');
+    }
+  </script>
 </body>
 </html>
